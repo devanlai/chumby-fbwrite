@@ -15,15 +15,29 @@ int g_height = HEIGHT;
 #include "fbtext.h"
 
 static FILE *fb_file;
-unsigned short *fb;
+pixel_t *fb;
 
 static int cur_x = 0,cur_y = 0, start_x = 0, start_y = 0;
-static unsigned short *fb_background;
-static unsigned short fb_color = 0; // font color
+static pixel_t *fb_background;
+static pixel_t fb_color = 0; // font color
 
 void fbtext_gotoxc( short x ) { cur_x = start_x = x * FONT_WIDTH; }
 void fbtext_gotoyc( short y ) { cur_y = start_y = y * FONT_HEIGHT; }
 void fbtext_gotoxyc( short x, short y ) { fbtext_gotoxc( x ); fbtext_gotoyc( y ); }
+
+#ifdef PIXEL_FORMAT_888
+
+pixel_t fbtext_makecolor(unsigned int r, unsigned int g, unsigned int b) {
+	return ((r&0xff)<<16) | ((g&0xff)<<8) | (b&0xff);
+}
+
+#else
+
+pixel_t fbtext_makecolor(unsigned int r, unsigned int g, unsigned int b) {
+	return ((r&0xf8)<<8) + ((g&0xfc)<<3) + ((b&0xf8)>>3);
+}
+
+#endif
 
 void fbtext_init(void)
 {
@@ -81,8 +95,8 @@ void fbtext_clear(void)
 
 void fbtext_scroll(void)
 {
-	short unsigned int *dst = fb;
-	short unsigned int *src = &fb[FONT_HEIGHT*g_width];
+	pixel_t *dst = fb;
+	pixel_t *src = &fb[FONT_HEIGHT*g_width];
 	int offset;
 	memmove(dst,src,ROWS*PIXELS_PER_ROW*BYTES_PER_PIXEL);
 	offset = (ROWS*PIXELS_PER_ROW);
@@ -132,9 +146,9 @@ void assure_fb(void)
 		//       screensize, pagesize );
 	        	
 		/* fix #6351 comment26 e.m. 2006oct20 */
-		fb = (unsigned short *)mmap(NULL , screensize+pagesize, PROT_READ | PROT_WRITE, MAP_SHARED, fh, 0);
+		fb = (pixel_t *)mmap(NULL , screensize+pagesize, PROT_READ | PROT_WRITE, MAP_SHARED, fh, 0);
 
-		if (fb == (unsigned short *)-1) {
+		if (fb == (pixel_t *)-1) {
 			printf("error mapping fb\n");
 			exit(1);
 		}
@@ -146,20 +160,20 @@ void assure_fb(void)
 			//	fb_fix.smem_start, fb, cur_x, cur_y);
 		}
 #else
-		fb = (unsigned short *)mmap(0,
+		fb = (pixel_t *)mmap(0,
 			g_width*g_height*BYTES_PER_PIXEL,
 			PROT_READ | PROT_WRITE,
 			MAP_SHARED,
 			fileno(fb_file),
 			0);
 
-		if (fb==(unsigned short *)-1)
+		if (fb==(pixel_t *)-1)
                 {
 			fprintf(stderr,"Can't mmap framebuffer, errno=%d\n",errno);
 			exit(1);
 		}
 #endif
-		fb_background = (unsigned short *)malloc(g_width*g_height*BYTES_PER_PIXEL);
+		fb_background = (pixel_t *)malloc(g_width*g_height*BYTES_PER_PIXEL);
 		memcpy(fb_background,fb,g_width*g_height*BYTES_PER_PIXEL);
 		fbtext_clear();
 	}
@@ -215,10 +229,10 @@ void fbtext_putc(char c)
 					unsigned long offset = (cur_y+y)*g_width+cur_x;
 					if (offset+FONT_WIDTH<g_width*g_height)
                     {
-						unsigned short *line = &fb[offset];
-						unsigned short *bg = &fb_background[offset];
+						pixel_t *line = &fb[offset];
+						pixel_t *bg = &fb_background[offset];
 						int x;
-						unsigned short b = *cp++;
+						pixel_t b = *cp++;
 						//if (y == 0) fprintf( stderr, "Sending out %c at %d,%d offset %lu\n", c, cur_x, cur_y, offset );
 						if (FONT_WIDTH>8)
                         {
@@ -263,7 +277,7 @@ void fbtext_putc(char c)
 //
 void fbtext_setcolor(uint16_t r, uint16_t g, uint16_t b)
 {
-	fb_color = ((r&0xf8)<<8) + ((g&0xfc)<<3) + ((b&0xf8)>>3);
+	fb_color = fbtext_makecolor(r, g, b);
 }
 
 //
@@ -340,7 +354,7 @@ void fbtext_fillrect(unsigned int top,unsigned int left,
                      uint16_t r, uint16_t g, uint16_t b)
 {
 	unsigned int y;
-	unsigned short color16 = ((r&0xf8)<<8) + ((g&0xfc)<<3) + ((b&0xf8)>>3);
+	pixel_t color = fbtext_makecolor(r, g, b);
 	// Sanity check the values
 	if (top>=bottom || left>=right)
 	{
@@ -357,10 +371,10 @@ void fbtext_fillrect(unsigned int top,unsigned int left,
     }
 	for (y=top;y<bottom;y++)
     {
-		unsigned short *line = &fb[y*g_width+left];
+		pixel_t *line = &fb[y*g_width+left];
 		unsigned width = right-left;
 		while (width--)
-			*line++ = color16;
+			*line++ = color;
 	}
 }
 
@@ -383,8 +397,8 @@ void fbtext_eraserect(unsigned int top,unsigned int left,
 	for (y=top;y<bottom;y++)
     {
 		unsigned long offset = y*g_width+left;
-		unsigned short *line = &fb[offset];
-		unsigned short *bg = &fb_background[offset];
+		pixel_t *line = &fb[offset];
+		pixel_t *bg = &fb_background[offset];
 		unsigned width = right-left;
 		while (width--)
         {

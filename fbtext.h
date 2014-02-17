@@ -14,7 +14,24 @@
 
 extern int g_width, g_height;
 
-#define BYTES_PER_PIXEL 2
+#if CNPLATFORM_falconwing
+
+#define PIXEL_FORMAT_565
+typedef uint16_t pixel_t;
+
+#elif CNPLATFORM_silvermoon
+
+#define PIXEL_FORMAT_888
+typedef uint32_t pixel_t;
+
+#else
+
+#define PIXEL_FORMAT_565
+typedef uint16_t pixel_t;
+
+#endif
+
+#define BYTES_PER_PIXEL (sizeof(pixel_t))
 
 #if (WIDTH>320)
 
