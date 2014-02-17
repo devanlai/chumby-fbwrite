@@ -1,16 +1,8 @@
 // $Id: fbtext.h 21207 2009-10-08 12:27:18Z henry $
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <linux/fb.h>
-#include <sys/mman.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <string.h>
-#include <stdarg.h>
-#include <errno.h>
+#ifndef __FBTEXT_H__
+#define __FBTEXT_H__
+
+#include <stdint.h>
 
 #ifndef WIDTH
 #define WIDTH 320
@@ -20,12 +12,7 @@
 #define HEIGHT 240
 #endif
 
-#ifdef _FBTEXT_H_OWNER
-int g_width = WIDTH;
-int g_height = HEIGHT;
-#else
 extern int g_width, g_height;
-#endif
 
 #define BYTES_PER_PIXEL 2
 
@@ -57,14 +44,14 @@ void fbtext_clear(void);
 void fbtext_scroll(void);
 void assure_fb(void);
 void fbtext_putc(char c);
-void fbtext_setcolor(unsigned short r, unsigned short g, unsigned short b);
+void fbtext_setcolor(uint16_t r, uint16_t g, uint16_t b);
 void fbtext_puts(char *s);
 void fbtext_gotoxy(short x,short y);
 void fbtext_printf(char const* fmt, ...);
 
 void fbtext_fillrect(unsigned int top,unsigned int left,
                      unsigned int bottom,unsigned int right,
-                     unsigned int r,unsigned int g, unsigned int b);
+                     uint16_t r, uint16_t g, uint16_t b);
 
 void fbtext_eraserect(unsigned int top,unsigned int left,
                       unsigned int bottom,unsigned int right);
@@ -72,3 +59,5 @@ void fbtext_eraserect(unsigned int top,unsigned int left,
 void fbtext_gotoxc( short x );
 void fbtext_gotoyc( short y );
 void fbtext_gotoxyc( short x, short y );
+
+#endif // __FBTEXT_H__

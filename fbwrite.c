@@ -1,7 +1,19 @@
 // $Id: fbwrite.c 21207 2009-10-08 12:27:18Z henry $
 
-#include <stdio.h>
 #include "fbtext.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+//#include <unistd.h>
+//#include <sys/stat.h>
+//#include <linux/fb.h>
+//#include <sys/mman.h>
+//#include <sys/ioctl.h>
+//#include <sys/types.h>
+//#include <sys/stat.h>
+//#include <stdarg.h>
+//#include <errno.h>
 
 #define VERSION_STR "0.12"
 

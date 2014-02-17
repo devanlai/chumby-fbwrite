@@ -1,6 +1,17 @@
 // $Id: fbtext.c 34164 2010-01-22 00:45:51Z ken $
 
-#define _FBTEXT_H_OWNER
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <linux/fb.h>
+#include <sys/mman.h>
+#include <sys/ioctl.h>
+#include <string.h>
+#include <stdarg.h>
+#include <errno.h>
+
+int g_width = WIDTH;
+int g_height = HEIGHT;
 #include "fbtext.h"
 
 static FILE *fb_file;
@@ -250,7 +261,7 @@ void fbtext_putc(char c)
 //
 // set the color of the text
 //
-void fbtext_setcolor(unsigned short r, unsigned short g, unsigned short b)
+void fbtext_setcolor(uint16_t r, uint16_t g, uint16_t b)
 {
 	fb_color = ((r&0xf8)<<8) + ((g&0xfc)<<3) + ((b&0xf8)>>3);
 }
@@ -326,7 +337,7 @@ void fbtext_printf(char const* fmt, ...)
 //
 void fbtext_fillrect(unsigned int top,unsigned int left,
                      unsigned int bottom,unsigned int right,
-                     unsigned int r,unsigned int g, unsigned int b)
+                     uint16_t r, uint16_t g, uint16_t b)
 {
 	unsigned int y;
 	unsigned short color16 = ((r&0xf8)<<8) + ((g&0xfc)<<3) + ((b&0xf8)>>3);
